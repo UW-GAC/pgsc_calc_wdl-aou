@@ -6,7 +6,7 @@ WDL wrapper for the [pgsc_calc](https://pgsc-calc.readthedocs.io/en/latest/) wor
 
 The first step of the workflow [formats the input genomes](https://pgsc-calc.readthedocs.io/en/latest/how-to/prepare.html) in PLINK2 format.
 
-The next step [runs the pgsc_calc nextflow workflow](https://pgsc-calc.readthedocs.io/en/latest/getting-started.html) inside a docker container. 
+The next step [runs the pgsc_calc nextflow workflow](https://pgsc-calc.readthedocs.io/en/latest/getting-started.html) inside a docker container.
 
 Either pgs_id or scorefile should be specified, not both. If a scorefile is provided, its genome build should match the genotypes and be specified in `target_build`.
 
@@ -80,9 +80,27 @@ Using harmonized scoring files (same effect allele for each variant) and a file 
 
 input | description
 --- | ---
-score_files | Array of score files 
+score_files | Array of score files
 weights | File with columns "score" and "weight" specifying the weight for each score. The scores should be a subset of those in score_files.
 
 output | description
 --- | ---
 combined_scores | File with combined weighted scores for each variant. Will have three columns: "ID" (variant id), "effect_allele", and "score".
+
+# Building the AOU-specific docker image
+
+This docker image includes all the files that were originally obtained with wget or `source` within a command block, which is not allowed on the AOU platform.
+
+1. Push all changes to the repository. Note that the Docker image will build off the "main" branch on GitHub.
+
+1. Build the image. Make sure to include no caching, or else local scripts will not be updated.
+
+    ```bash
+    docker build -f calc_scores_aou.dockerfile --no-cache -t uwgac/calc_scores_aou:X.Y.Z .
+    ```
+
+1. Push the image to Docker Hub.
+
+    ```bash
+    docker push uwgac/calc_scores_aou:X.Y.Z
+    ```
