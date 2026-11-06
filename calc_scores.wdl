@@ -138,7 +138,7 @@ task harmonize_score_file {
     }
 
     runtime {
-        docker: "quay.io/biocontainers/plink2:2.00a5.12--h4ac6f70_0"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rtibiocloud/plink:v2.0.0-a.6.15_18fccba"
         disks: "local-disk ~{disk_size} SSD"
         memory: "16G"
     }
@@ -164,7 +164,7 @@ task chr_prefix {
     }
 
     runtime {
-        docker: "quay.io/biocontainers/plink2:2.00a5.12--h4ac6f70_0"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rtibiocloud/plink:v2.0.0-a.6.15_18fccba"
         disks: "local-disk ~{disk_size} SSD"
         memory: "16G"
     }
@@ -187,7 +187,7 @@ task n_cols {
     }
 
     runtime {
-        docker: "rocker/tidyverse:4"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "16G"
     }
@@ -221,7 +221,7 @@ task plink_score {
     }
 
     runtime {
-        docker: "quay.io/biocontainers/plink2:2.00a5.12--h4ac6f70_0"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rtibiocloud/plink:v2.0.0-a.6.15_18fccba"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
         cpu: "~{cpu}"
@@ -281,7 +281,7 @@ task compute_overlap {
     }
 
     runtime {
-        docker: "rocker/tidyverse:4"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
     }
@@ -317,7 +317,7 @@ task aggregate_results {
     }
 
     runtime {
-        docker: "rocker/tidyverse:4"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb} GB"
 	}

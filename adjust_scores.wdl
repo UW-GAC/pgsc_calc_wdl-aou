@@ -52,7 +52,7 @@ task adjust_prs {
     }
 
     runtime {
-        docker: "rocker/tidyverse:4"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
     }
