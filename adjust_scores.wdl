@@ -36,7 +36,7 @@ task adjust_prs {
     command <<<
         Rscript -e "
         library(readr); \
-        source('https://raw.githubusercontent.com/UW-GAC/pgsc_calc_wdl/refs/heads/main/ancestry_adjustment.R'); \
+        source('/usr/local/pgsc_calc_wdl-aou/ancestry_adjustment.R'); \
         scores <- read_tsv('~{scores}'); \
         pcs <- read_tsv('~{pcs}'); \
         mean_coef <- read_tsv('~{mean_coef}'); \
@@ -52,7 +52,7 @@ task adjust_prs {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/uwgac/calc_scores_aou:0.0.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
     }

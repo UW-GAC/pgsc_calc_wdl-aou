@@ -300,9 +300,7 @@ task aggregate_results {
     Int disk_size = ceil(3*(size(raw_scores, "GB") + size(adjusted_scores, "GB") + size(overlap_files, "GB"))) + 10
 
     command <<<
-        wget https://raw.githubusercontent.com/schaidlab/pgsc_calc_wdl/refs/heads/main/pipe/aggregate_scores.R
-        Rscript -e 'install.packages("optparse")'
-        Rscript aggregate_scores.R \
+        Rscript /usr/local/pgsc_calc_wdl-aou/aggregate_scores.R \
             --raw_files "~{sep=',' raw_scores}" \
             --adjusted_files "~{sep=',' adjusted_scores}" \
             --overlap_files "~{sep=',' overlap_files}" \
@@ -317,7 +315,7 @@ task aggregate_results {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/uwgac/calc_scores_aou:0.0.1"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb} GB"
 	}
