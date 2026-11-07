@@ -7,15 +7,13 @@ import "subset_score_file.wdl" as subset
 workflow calc_scores {
     input {
         Array[File] scorefiles
-        File pgen
-        File pvar
-        File psam
+        Array[Array[File]] plink_filesets
         Boolean harmonize_scorefile = false
         Boolean add_chr_prefix = false
         Boolean ancestry_adjust = true
         File? pcs
         File? subset_variants
-        String cohort = "cohort"
+        String cohort = "AOU"
     }
 
     scatter (scorefile in scorefiles) {
@@ -48,32 +46,44 @@ workflow calc_scores {
                 file = scorefile_final
         }
 
-        call plink_score {
-            input:
-                scorefile = scorefile_final,
-                scorefile_ncols = n_cols.ncols,
-                pgen = pgen,
-                pvar = pvar,
-                psam = psam,
-                prefix = cohort
+        scatter (plink_fileset in plink_filesets) {
+            call plink_score_by_chromosome {
+                input:
+                    scorefile = scorefile_final,
+                    scorefile_ncols = n_cols.ncols,
+                    plink_bed = plink_fileset[0],
+                    plink_bim = plink_fileset[1],
+                    plink_fam = plink_fileset[2]
+            }
         }
+
+        call combine_chromosome_scores {
+            input:
+                chr_score_files = plink_score_by_chromosome.chr_scores_file
+        }
+
+        call combine_chromosome_variants {
+            input:
+                chr_variants_files = plink_score_by_chromosome.chr_variants_file
+        }
+
 
         call compute_overlap {
             input:
                 scorefile = select_first([chr_prefix.outfile, harmonize_score_file.scorefile_harmonized, scorefile]),
-                variants = plink_score.variants
+                variants = combine_chromosome_variants.variants_file
         }
 
         if (ancestry_adjust) {
             call fit_ancestry.find_ancestry_coefficients {
                 input:
-                    scores = plink_score.scores,
+                    scores = combine_chromosome_scores.scores_file,
                     pcs = select_first([pcs, ""])
             }
 
             call adjust_scores.adjust_prs {
                 input:
-                    scores = plink_score.scores,
+                    scores = combine_chromosome_scores.scores_file,
                     pcs = select_first([pcs, ""]),
                     mean_coef = find_ancestry_coefficients.mean_coef,
                     var_coef = find_ancestry_coefficients.var_coef
@@ -81,7 +91,7 @@ workflow calc_scores {
         }
     }
 
-    Array[File] scores = plink_score.scores
+    Array[File] scores = combine_chromosome_scores.scores_file
     Array[File?] maybe_adjusted_scores = adjust_prs.adjusted_scores
     Array[File] overlaps = compute_overlap.overlap
 
@@ -194,30 +204,41 @@ task n_cols {
 }
 
 
-task plink_score {
+task plink_score_by_chromosome {
     input {
         File scorefile
         Int scorefile_ncols
-        File pgen
-        File pvar
-        File psam
-        String prefix = "out"
+        File plink_bed
+        File plink_bim
+        File plink_fam
         Int mem_gb = 16
         Int cpu = 2
     }
 
-    Int disk_size = ceil(1.5*(size(pgen, "GB") + size(pvar, "GB") + size(psam, "GB") + size(scorefile, "GB"))) + 10
+    Int disk_size = ceil(1.5*(size(plink_bed, "GB") + size(plink_bim, "GB") + size(plink_fam, "GB") + size(scorefile, "GB"))) + 10
     String score_cols = if (scorefile_ncols > 3) then "3-~{scorefile_ncols}" else "3"
 
     command <<<
-        plink2 --pgen ~{pgen} --pvar ~{pvar} --psam ~{psam} --score ~{scorefile} \
-            no-mean-imputation header-read list-variants cols=+scoresums --score-col-nums ~{score_cols} \
-            --out ~{prefix}
+        plink2 \
+            --bed ~{plink_bed} \
+            --bim ~{plink_bim} \
+            --fam ~{plink_fam} \
+            --score ~{scorefile} \
+            no-mean-imputation header-read list-variants cols=-scoreavgs,+scoresums,+denom \
+            --score-col-nums ~{score_cols} \
+            --out tmp
+
+        # If the output sscore file does not exist, create an empty file.
+        # If it exists, this command won't change it.
+        touch tmp.sscore
+        touch tmp.sscore.vars
+
+        echo "Number of variants found:" `wc -l < tmp.sscore.vars`
     >>>
 
     output {
-        File scores = "~{prefix}.sscore"
-        File variants = "~{prefix}.sscore.vars"
+        File chr_scores_file = "tmp.sscore"
+        File chr_variants_file = "tmp.sscore.vars"
     }
 
     runtime {
@@ -226,6 +247,90 @@ task plink_score {
         memory: "~{mem_gb}G"
         cpu: "~{cpu}"
     }
+}
+
+task combine_chromosome_scores {
+    input {
+        Array[File] chr_score_files
+    }
+
+    command <<<
+
+        R --vanilla << RSCRIPT
+
+        library(tidyverse)
+
+        score_files = str_split("~{sep=' ' chr_score_files}", " ")[[1]]
+        print(score_files)
+
+        chr_levels = c(1:22, "X", "Y")
+
+        x = score_files %>%
+            lapply(read_tsv, show_col_types=F) %>%
+            bind_rows()
+
+        # Hopefully better memory usage.
+        combined = x %>%
+            group_by(`#IID`) %>%
+            summarise(
+                ALLELE_CT=sum(ALLELE_CT),
+                DENOM=sum(DENOM),
+                NAMED_ALLELE_DOSAGE_SUM=sum(NAMED_ALLELE_DOSAGE_SUM),
+                across(starts_with("PGS"), sum, .names = "{.col}")
+            ) %>%
+            mutate(
+                across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
+            )
+
+        names(combined) = str_replace(names(combined), "SUM_AVG", "AVG")
+        write_tsv(combined, "scores.txt")
+
+        RSCRIPT
+    >>>
+
+    output {
+        File scores_file = "scores.txt"
+    }
+
+    runtime {
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
+        disks: "local-disk 10 SSD"
+        memory: "16G"
+    }
+}
+
+task combine_chromosome_variants {
+    input {
+        Array[File] chr_variants_files
+    }
+
+    command <<<
+
+        R --vanilla << RSCRIPT
+
+        library(tidyverse)
+
+        vars_files = str_split("~{sep=' ' chr_variants_files}", " ")[[1]]
+        print(vars_files)
+
+        x = vars_files %>%
+            lapply(read_tsv, show_col_types=F) %>%
+            bind_rows()
+
+        write_tsv(x, "variants.txt")
+        RSCRIPT
+    >>>
+
+    output {
+        File variants_file = "variants.txt"
+    }
+
+    runtime {
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
+        disks: "local-disk 10 SSD"
+        memory: "16G"
+    }
+
 }
 
 
