@@ -31,7 +31,7 @@ task find_ancestry_coefficients {
     command <<<
         Rscript -e "
         library(readr); \
-        source('https://raw.githubusercontent.com/UW-GAC/pgsc_calc_wdl/refs/heads/main/ancestry_adjustment.R'); \
+        source('/usr/local/pgsc_calc_wdl-aou/ancestry_adjustment.R'); \
         scores <- read_tsv('~{scores}'); \
         pcs <- read_tsv('~{pcs}'); \
         scores <- prep_scores(scores); \
