@@ -306,20 +306,7 @@ task combine_chromosome_variants {
     }
 
     command <<<
-
-        R --vanilla << RSCRIPT
-
-        library(tidyverse)
-
-        vars_files = str_split("~{sep=' ' chr_variants_files}", " ")[[1]]
-        print(vars_files)
-
-        x = vars_files %>%
-            lapply(read_tsv, show_col_types=F) %>%
-            bind_rows()
-
-        write_tsv(x, "variants.txt")
-        RSCRIPT
+        cat ~{sep=' ' chr_variants_files}  > variants.txt
     >>>
 
     output {
