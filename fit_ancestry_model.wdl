@@ -29,16 +29,16 @@ task find_ancestry_coefficients {
     Int disk_size = ceil(2.5*(size(scores, "GB") + size(pcs, "GB"))) + 10
 
     command <<<
-        Rscript -e "
-        library(readr); \
-        source('/usr/local/pgsc_calc_wdl-aou/ancestry_adjustment.R'); \
-        scores <- read_tsv('~{scores}'); \
-        pcs <- read_tsv('~{pcs}'); \
-        scores <- prep_scores(scores); \
-        model <- fit_prs(scores, pcs); \
-        write_tsv(model[['mean_coef']], 'mean_coef.txt'); \
-        write_tsv(model[['var_coef']], 'var_coef.txt'); \
-        "
+        R << RSCRIPT
+            library(readr); \
+            source('/usr/local/pgsc_calc_wdl-aou/ancestry_adjustment.R')
+            scores <- read_tsv('~{scores}')
+            pcs <- read_tsv('~{pcs}', col_types=cols(IID = col_character()))
+            scores <- prep_scores(scores)
+            model <- fit_prs(scores, pcs)
+            write_tsv(model[['mean_coef']], 'mean_coef.txt')
+            write_tsv(model[['var_coef']], 'var_coef.txt')
+        RSCRIPT
     >>>
 
     output {
