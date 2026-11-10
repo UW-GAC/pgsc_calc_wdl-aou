@@ -52,7 +52,7 @@ task adjust_prs {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/uwgac/calc_scores_aou:0.0.2"
+        docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/uwgac/calc_scores_aou:0.0.3"
         disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
     }
