@@ -96,7 +96,7 @@ This docker image includes all the files that were originally obtained with wget
 1. Build the image. Make sure to include no caching, or else local scripts will not be updated.
 
     ```bash
-    docker build -f calc_scores_aou.dockerfile --no-cache -t uwgac/calc_scores_aou:X.Y.Z .
+    docker build -f calc_scores_aou.dockerfile --no-cache --platform=linux/amd64 -t uwgac/calc_scores_aou:X.Y.Z .
     ```
 
 1. Push the image to Docker Hub.
