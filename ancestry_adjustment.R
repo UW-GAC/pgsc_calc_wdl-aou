@@ -3,7 +3,7 @@ library(stringr)
 
 prep_scores <- function(scores) {
     scores2 <- scores %>%
-        select(IID=`#IID`, ends_with("_SUM")) %>%
+        select(IID=`IID`, ends_with("_SUM")) %>%
         select(IID, starts_with("PGS")) %>%
         mutate(IID = as.character(IID))
     names(scores2) <- str_replace(names(scores2), "_SUM", "")
@@ -23,7 +23,7 @@ fit_prs <- function(scores, pcs) {
         model_string <- paste(s, "~", paste(pccols, collapse="+"))
         pcmod <- lm(model_string, data=dat)
         mean_coef[[s]] <- pcmod$coefficients
-        
+
         dat$residsq <- (pcmod$residuals)^2
         model_string <- paste("residsq ~", paste(pccols, collapse="+"))
         # use Gamma regression with log link to avoid negative values
@@ -57,7 +57,7 @@ adjust_prs <- function(scores, pcs, mean_coef, var_coef) {
     pcmat <- pcs %>%
         select(starts_with("PC")) %>%
         as.matrix()
-    
+
     all_scores <- names(scores)[-1]
     score_adj <- list()
     for (s in all_scores) {
@@ -100,7 +100,7 @@ prep_groups <- function(groups) {
 adjust_prs_empirical <- function(scores, groups) {
     dat <- inner_join(groups, scores)
     samples <- dat$IID
-    
+
     all_scores <- names(scores)[-1]
     grp_list <- list()
     for (g in unique(dat$group)) {
