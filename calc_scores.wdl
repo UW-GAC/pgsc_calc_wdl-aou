@@ -252,6 +252,7 @@ task plink_score_by_chromosome {
 task combine_chromosome_scores {
     input {
         Array[File] chr_score_files
+        Int mem_gb = 32
     }
 
     command <<<
@@ -295,7 +296,7 @@ task combine_chromosome_scores {
     runtime {
         docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
         disks: "local-disk 10 SSD"
-        memory: "16G"
+        memory: "~{mem_gb}G"
     }
 }
 
