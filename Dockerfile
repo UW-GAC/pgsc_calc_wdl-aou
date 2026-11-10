@@ -1,5 +1,5 @@
 # Software installation, no database files
-FROM condaforge/miniforge3:24.7.1-2
+FROM --platform=linux/amd64 condaforge/miniforge3:24.7.1-2
 
 # build and run as root users since micromamba image has 'mambauser' set as the $USER
 USER root
