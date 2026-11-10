@@ -271,7 +271,7 @@ task combine_chromosome_scores {
 
         # Hopefully better memory usage.
         combined = x %>%
-            group_by(`#IID`) %>%
+            group_by(IID) %>%
             summarise(
                 ALLELE_CT=sum(ALLELE_CT),
                 DENOM=sum(DENOM),
