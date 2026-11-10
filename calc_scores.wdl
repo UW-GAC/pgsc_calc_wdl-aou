@@ -160,7 +160,7 @@ task chr_prefix {
         File file
     }
 
-    Int disk_size = ceil(5*(size(file, "GB"))) + 10
+    Int disk_size = ceil(10*(size(file, "GB"))) + 10
     String filename = basename(file, ".gz")
 
     command <<<
