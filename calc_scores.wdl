@@ -286,8 +286,9 @@ task combine_chromosome_scores {
                 across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
             )
 
-        names(combined) = str_replace(names(combined), "SUM_AVG", "AVG")
-        write_tsv(combined, "scores.txt")
+
+        names(scores) = str_replace(names(scores), "SUM_AVG", "AVG")
+        write_tsv(scores, "scores.txt")
 
         RSCRIPT
     >>>
