@@ -260,28 +260,29 @@ task combine_chromosome_scores {
         R --vanilla << RSCRIPT
 
         library(tidyverse)
+        library(data.table)
 
         score_files = str_split("~{sep=' ' chr_score_files}", " ")[[1]]
         print(score_files)
 
-        chr_levels = c(1:22, "X", "Y")
+        # Read in the header
+        header = read_tsv(score_files[1], n_max=1)
+        col_select = names(header)[2:ncol(header)]
+        print(col_select)
 
-        x = score_files %>%
-            lapply(read_tsv, show_col_types=F) %>%
-            bind_rows()
+        # Read in the first score file
+        scores = fread(score_files[1], select=col_select)
 
-        # Hopefully better memory usage.
-        combined = x %>%
-            group_by(IID) %>%
-            summarise(
-                ALLELE_CT=sum(ALLELE_CT),
-                DENOM=sum(DENOM),
-                NAMED_ALLELE_DOSAGE_SUM=sum(NAMED_ALLELE_DOSAGE_SUM),
-                across(starts_with("PGS"), sum, .names = "{.col}")
-            ) %>%
-            mutate(
-                across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
-            )
+        # Loop over the remaining score file and sum
+        for (score_file in score_files[-1]) {
+            tmp = fread(score_file, select=col_select)
+            x = bind_rows(scores, tmp)
+            scores = x[, lapply(.SD, sum), by = IID]
+        }
+
+        scores %>%
+            as_tibble() %>%
+            across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
 
         names(combined) = str_replace(names(combined), "SUM_AVG", "AVG")
         write_tsv(combined, "scores.txt")
