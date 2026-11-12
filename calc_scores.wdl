@@ -282,7 +282,9 @@ task combine_chromosome_scores {
 
         scores %>%
             as_tibble() %>%
-            across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
+            mutate(
+                across(starts_with("PGS"), function(x) x / DENOM, .names="{.col}_AVG")
+            )
 
         names(combined) = str_replace(names(combined), "SUM_AVG", "AVG")
         write_tsv(combined, "scores.txt")
