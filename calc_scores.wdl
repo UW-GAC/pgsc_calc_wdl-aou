@@ -255,6 +255,8 @@ task combine_chromosome_scores {
         Int mem_gb = 32
     }
 
+    Int disk_size = ceil(1.5*(size(chr_score_files, "GB"))) + 10
+
     command <<<
 
         R --vanilla << RSCRIPT
@@ -299,7 +301,7 @@ task combine_chromosome_scores {
 
     runtime {
         docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
-        disks: "local-disk 10 SSD"
+        disks: "local-disk ~{disk_size} SSD"
         memory: "~{mem_gb}G"
     }
 }
@@ -308,6 +310,8 @@ task combine_chromosome_variants {
     input {
         Array[File] chr_variants_files
     }
+
+    Int disk_size = ceil(1.5*(size(chr_variants_files, "GB"))) + 10
 
     command <<<
         cat ~{sep=' ' chr_variants_files}  > variants.txt
@@ -319,7 +323,7 @@ task combine_chromosome_variants {
 
     runtime {
         docker: "us-central1-docker.pkg.dev/all-of-us-rw-prod/aou-rw-gar-remote-repo-docker-prod/rocker/tidyverse:4.6.1"
-        disks: "local-disk 10 SSD"
+        disks: "local-disk ~{disk_size} SSD"
         memory: "16G"
     }
 
